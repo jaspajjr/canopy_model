@@ -75,4 +75,9 @@ def senescence(max_rfr_tt, sen_rfr, rfr_list):
 			sen = "NaN"
 	return sen
 
+def canopy_circ_days(par, start, stop):
+	temp_par_df = par[par.tt > start]
+	temp_tt = temp_par_df.iloc[0][0]
+	return temp_tt
+
 df = data_input("C:\\users\\john\\google drive\\modelling\\raw.csv")
