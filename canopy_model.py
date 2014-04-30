@@ -75,9 +75,49 @@ def senescence(max_rfr_tt, sen_rfr, rfr_list):
 			sen = "NaN"
 	return sen
 
-def canopy_circ_days(par, start, stop):
-	temp_par_df = par[par.tt > start]
+def tt_to_par_tt_conversion(par, value):
+	# Converts the tt as an integer, to the tt measurement made in 
+	# the PAR  data file 
+	temp_par_df = par[par.tt > value]
 	temp_tt = temp_par_df.iloc[0][0]
 	return temp_tt
 
+def circ_days(par, start, stop):
+	# Calculates the number of days between two tt index values
+	temp_start = par[par.tt == start]
+	temp_stop = par[par.tt == stop]
+	return temp_stop - temp_start
+
+def daily_rfr_calc(par_index, par, rfr_list):
+	# Find the PAR interception on a given day
+	tt = par.iloc[par_index][0]
+	tt = int(round(tt))
+	daily_rfr = rfr_list[(a + 1)]
+	return daily_rfr
+
+def daily_par_calc(par, daily_rfr, par_index):
+	# Calculate the PAR intercepted on a given day
+	daily_par = daily_rfr * (0.5 * par["kipp"][par_index])	
+	return daily_par
+
+def total_par_calc(start, stop):
+	# Calculate the PAR intercepted between two days
+
+	# Convert the input termal time values, into their nearest 
+	# equivalents in the par file. The corresponding
+	# par measurements can then be used 
+	par_tt_start = tt_to_par_tt_conversion(par, start)
+	par_tt_stop = tt_to_par_tt_conversion(par, stop)
+	
+	canopy_duration_circ = circ_days(par, par_tt_start, par_tt_stop)
+	
+	daily_par_list = []
+	for count in range(0, canopy_duration_circ):
+		daily_rfr = daily_rfr_calc((par_index + count))
+		daily_par = daily_par_calc(par, daily_rfr, (par_index + count))
+		daily_par_list.append(daily_par)
+
+	total_par = sum(daily_par_list)
+	return total_par, circ_days
+	
 df = data_input("C:\\users\\john\\google drive\\modelling\\raw.csv")
