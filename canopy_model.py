@@ -119,5 +119,18 @@ def total_par_calc(start, stop):
 
 	total_par = sum(daily_par_list)
 	return total_par, circ_days
-	
+
+def rfr_after_n(reference, n_days, par):
+	# Calculates the absolute R:FR value n days after the reference
+	# point. n_days is expected to be an integer
+	reference_index = tt_to_par_tt_conversion(par, reference)
+	n_days = reference_index + n_days
+	rfr_after_n_days = daily_rfr_calc(n_days, par, rfr_list)
+	return rfr_after_n_days
+
+'''
+Derivative related modules
+'''
+
+
 df = data_input("C:\\users\\john\\google drive\\modelling\\raw.csv")
