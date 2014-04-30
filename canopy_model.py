@@ -132,5 +132,14 @@ def rfr_after_n(reference, n_days, par):
 Derivative related modules
 '''
 
+'''
+Integral related modules
+'''
+
+def int_f(p0, x):
+	# The integral of the function f(x) at x
+	c, b1, m1, a, b2, m2 = p0
+	int_f_x = (c * (c * exp(-exp(b2 * (x - m2))) + a)) / (1 + exp(b1 * (x - m1)))
+	return int_f_x
 
 df = data_input("C:\\users\\john\\google drive\\modelling\\raw.csv")
