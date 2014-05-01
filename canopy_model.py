@@ -131,6 +131,11 @@ def rfr_after_n(reference, n_days, par):
 '''
 Derivative related modules
 '''
+def dy_f(p0, x):
+	# The derivative of the function f(x) at x
+	c, b1, m1, a, b2, m2 = p0
+	dy_f_x = ((b1 * c * exp(-b1 * (-m1 + x))) / (np.power(1 + exp(-b1 * (-m1 + x)), 2))) * (c * exp(-exp(-b2 * (-m2 + x))) + a) + ((np.power(c, 2) * b2 * exp(-b2 * (-m2 + x)) * exp(-exp(-b2 * (-m2 + x)))) / 1 + exp(-b1 * (-m1 + x)))
+	return dy_f_x
 
 '''
 Integral related modules
@@ -142,4 +147,11 @@ def int_f(p0, x):
 	int_f_x = (c * (c * exp(-exp(b2 * (x - m2))) + a)) / (1 + exp(b1 * (x - m1)))
 	return int_f_x
 
+def calc_def_int(start, stop):
+	# Calculates the integral between start point and stop point
+	int_f_start = int_f(p0, start)
+	int_f_stop = int_f(p0, stop)
+	return int_f_stop - int_f_start
+
 df = data_input("C:\\users\\john\\google drive\\modelling\\raw.csv")
+par = data_input("C:\\users\\john\\google drive\\modelling\\par.csv")
