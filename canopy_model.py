@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import sympy as sym 
 from scipy.optimize import curve_fit
+from scipy.integrate import quad
 
 def data_input(file_location):
 	# Inputs data frame
@@ -149,27 +150,19 @@ def f_prime(x, p0):
 Integral related modules
 '''
 
-def integral_calc():
-	''' A function to calculate the integral of f(x). One time only.
-	Has to be used in symbols
+def integral_calc(p0, start, stop):
+	''' Calculates the definite integral between start and stop, 
+	given parameters p0
 	'''
-	print "Starting integr calculation"
-	start = time.time()
-	c, b, m = symbols("c, b, m")
-	z, n, p, q = symbols("z, n, p, q")
-	x = symbols("x")
-	g = (c / (1 + exp(-b * (x - m)))) * (z + (c * exp(-exp(-p * (x - n)))))
-	gx = integrate(g, x)
-	Gx = lambdify(x, fx, 'numpy')
-	return Gx
+	# The equation to be fitted, however with the parameters stored in p0
+	c, b1, m1, a, b2, m2 = p0
+	temp_f = (c / (1 + np.exp(-b1 * (x - m1)))) * (a + (c * np.exp((-1 * (np.exp(-b2 * (x - m2)))))))
+	ans, err = quad(temp_f, start, stop)
+	return ans
 
 
 
-def calc_def_int(start, stop):
-	# Calculates the integral between start point and stop point
-	int_f_start = int_f(p0, start)
-	int_f_stop = int_f(p0, stop)
-	return int_f_stop - int_f_start
+
 
 df = data_input("C:\\users\\john\\google drive\\modelling\\raw.csv")
 par = data_input("C:\\users\\john\\google drive\\modelling\\par.csv")
