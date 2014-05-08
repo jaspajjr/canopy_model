@@ -17,10 +17,11 @@ print type(f)
 fx = diff(f, x)
 gx = integrate(g, x)
 Fx = lambdify(x, fx, 'numpy')
-Gx = lambdify(x, fx, 'numpy')
+Gx = lambdify(x, gx, 'numpy')
 xi = np.linspace(0, 2, 5)
-print Fx(xi)
-print Gx(xi)
+#print Fx(xi)
+print Gx(10) - Gx(5)
+#print gx
 
 elapsed = time.time() - start
 print elapsed
