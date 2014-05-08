@@ -160,9 +160,45 @@ def integral_calc(p0, start, stop):
 	ans, err = quad(temp_f, start, stop)
 	return ans
 
+'''
+########################################################################
+This section of the code deals with functions being executed, rather than
+functions being created. 
+'''
 
+# Input the raw data
+df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw.csv")
+par = pd.read_csv("C:\\users\\john\\google drive\\modelling\\par.csv")
+anth = pd.read_csv("C:\\users\\john\\google drive\\modelling\\anth.csv")
 
+# Set up the dataframe which will ouput the final values
+field = pd.DataFrame()
+field["gs_31"] = anth["gs_31"]
+field["anth"] = anth["anth"]
 
+# Setup the dataframe which will store the parameter values
+p0_index = [x for x in xrange(0, 6)]
+p0 = pd.DataFrame(index = p0_index)
 
-df = data_input("C:\\users\\john\\google drive\\modelling\\raw.csv")
-par = data_input("C:\\users\\john\\google drive\\modelling\\par.csv")
+# Remove the anth dataframe as it is no longer needed
+del anth
+
+field["gs_31_anth"] = field["anth"] - field["gs_31"]
+
+tt = df.loc[0]
+p0_initial = [0.8, 0.001, 2000, 0, -0.001, 700]
+
+count = 0
+marquardt_start = time.time()
+for plot in range(1, len(df)):
+	count += 1
+	temp = []
+	temp_p0 = marquardt(f_fit, tt, df.loc[plot], p0_initial)
+	p0["Plot%d" %plot] = temp_p0
+
+marquardt_time = time.time() - marquardt_start
+
+p0 = p0.transpose()
+p0.columns = ["c", "b1", "m1", "a", "b2", "m2"]
+
+print p0.head()
