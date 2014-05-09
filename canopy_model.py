@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import sympy as sym 
 from scipy.optimize import curve_fit
 from scipy.integrate import quad
+start_time = time.time()
+print "Starting"
 
 def data_input(file_location):
 	# Inputs data frame
@@ -175,30 +177,39 @@ anth = pd.read_csv("C:\\users\\john\\google drive\\modelling\\anth.csv")
 field = pd.DataFrame()
 field["gs_31"] = anth["gs_31"]
 field["anth"] = anth["anth"]
+field["gs_31_anth"] = field["anth"] - field["gs_31"]
 
 # Setup the dataframe which will store the parameter values
 p0_index = [x for x in xrange(0, 6)]
-p0 = pd.DataFrame(index = p0_index)
-
+p0 = pd.DataFrame(index=p0_index)
 # Remove the anth dataframe as it is no longer needed
 del anth
 
-field["gs_31_anth"] = field["anth"] - field["gs_31"]
-
+# Setup for the loop to calculate p0 from marquardt
 tt = df.loc[0]
 p0_initial = [0.8, 0.001, 2000, 0, -0.001, 700]
-
-count = 0
 marquardt_start = time.time()
-for plot in range(1, len(df)):
-	count += 1
+for plot in xrange(1, len(df)):
 	temp = []
 	temp_p0 = marquardt(f_fit, tt, df.loc[plot], p0_initial)
 	p0["Plot%d" %plot] = temp_p0
-
 marquardt_time = time.time() - marquardt_start
-
 p0 = p0.transpose()
 p0.columns = ["c", "b1", "m1", "a", "b2", "m2"]
+print "Marquardt time %d" %marquardt_time
 
-print p0.head()
+# Calculating the residuals
+res_index = [x for x in xrange(0, 21)]
+residuals = pd.DataFrame(index=res_index)
+res_start = time.time()
+for plot in xrange(1, len(df)):
+	y_est, res2 = residual_calculator(tt, df.loc[1], p0.iloc[(plot-1)])
+	residuals["Plot%d" %plot] = res2
+res_time = time.time() - res_start
+residuals = residuals.transpose()
+cols = ["r%d" %x for x in xrange(1, 22)]
+print "Residual time %d" %res_time
+print residuals[1:5][1:5]
+
+total_time = time.time() - start_time
+print "Total time taken %d" %total_time
