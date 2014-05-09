@@ -61,21 +61,29 @@ def plot_rfr(p0):
 	y_pred = [f(a, p0) for a in xrange(0, 3001)]
 	return y_pred
 
-def max_rfr(rfr_list):
+def max_rfr_finder(rfr_list):
 	# Finds the maximum r:fr and the tt to the max r:fr value 
 	max_rfr = max(rfr_list)
 	max_rfr_tt = rfr_list.index(max_rfr)
 	return max_rfr, max_rfr_tt
 
-def senescence(max_rfr_tt, sen_rfr, rfr_list):
+def senescence(max_rfr, sen_rfr, rfr_list):
 	'''Perform type check before this'''
 	# Calculates the tt to senescence
-	for item in (rfr_list[(rfr_list.index(max)):]):
-		if round(item, 2) == round(item, 2):
-			sen = item
-			break
-		else:
-			sen = "NaN"
+	rfr_list = rfr_list.tolist()
+	#for item in (rfr_list[(rfr_list.index(round(max_rfr, 2))):]):
+	count = 0
+	temp_sen_list = []
+	for item in rfr_list:
+		count += 1
+		if round(item, 2) == round(sen_rfr, 2):
+			temp_sen_list.append(count)
+
+	if len(temp_sen_list) == 0:
+		sen = "NaN"
+		return sen
+	else:
+		sen = temp_sen_list[-1]
 	return sen
 
 def tt_to_par_tt_conversion(par, value):
@@ -167,37 +175,42 @@ def integral_calc(p0, start, stop):
 This section of the code deals with functions being executed, rather than
 functions being created. 
 '''
-
+''''''''''''''''''''''''''''''''''''''''''''''''
 # Input the raw data
 df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw.csv")
 par = pd.read_csv("C:\\users\\john\\google drive\\modelling\\par.csv")
 anth = pd.read_csv("C:\\users\\john\\google drive\\modelling\\anth.csv")
 
+tt = df.loc[0]
+df = df.loc[1:]
+''''''''''''''''''''''''''''''''''''''''''''''''
 # Set up the dataframe which will ouput the final values
-field = pd.DataFrame()
+field = pd.DataFrame(index=df.index)
 field["gs_31"] = anth["gs_31"]
 field["anth"] = anth["anth"]
 field["gs_31_anth"] = field["anth"] - field["gs_31"]
 
+''''''''''''''''''''''''''''''''''''''''''''''''
 # Setup the dataframe which will store the parameter values
 p0_index = [x for x in xrange(0, 6)]
 p0 = pd.DataFrame(index=p0_index)
 # Remove the anth dataframe as it is no longer needed
 del anth
 
+''''''''''''''''''''''''''''''''''''''''''''''''
 # Setup for the loop to calculate p0 from marquardt
-tt = df.loc[0]
 p0_initial = [0.8, 0.001, 2000, 0, -0.001, 700]
 marquardt_start = time.time()
-for plot in xrange(1, len(df)):
+for plot in xrange(0, len(df)):
 	temp = []
-	temp_p0 = marquardt(f_fit, tt, df.loc[plot], p0_initial)
+	temp_p0 = marquardt(f_fit, tt, df.iloc[plot], p0_initial)
 	p0["Plot%d" %plot] = temp_p0
 marquardt_time = time.time() - marquardt_start
 p0 = p0.transpose()
 p0.columns = ["c", "b1", "m1", "a", "b2", "m2"]
 print "Marquardt time %d" %marquardt_time
 
+''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculating the residuals
 res_index = [x for x in xrange(0, 21)]
 residuals = pd.DataFrame(index=res_index)
@@ -209,7 +222,61 @@ res_time = time.time() - res_start
 residuals = residuals.transpose()
 cols = ["r%d" %x for x in xrange(1, 22)]
 print "Residual time %d" %res_time
-print residuals[1:5][1:5]
 
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate rfr values for each plot
+rfr_df_index = [x for x in xrange(0, 3001)]
+rfr_df = pd.DataFrame(index=rfr_df_index)
+rfr_start = time.time()
+#rfr_df["Plot0"] = [0 for x in xrange(0, 3001)]
+for plot in xrange(0, (len(df))):
+	rfr_df["Plot%d" %(plot + 1)] = plot_rfr(p0.iloc[(plot)])
+rfr_df = rfr_df.transpose()
+rfr_time = time.time() - rfr_start
+print "rfr time %d" %rfr_time
+
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the maximum rfr, and tt to max rfr
+max_rfr_finder_time_start = time.time()
+max_rfr_list = []
+max_rfr_tt_list = []
+for plot in xrange(0, len(df)):
+	if type(rfr_df.iloc[plot][0]) == str:
+		max_rfr_temp, max_rfr_tt_temp = "NaN", "NaN"
+	else:
+		max_rfr_temp, max_rfr_tt_temp = max_rfr_finder(rfr_df.iloc[plot].tolist())
+	max_rfr_list.append(max_rfr_temp)
+	max_rfr_tt_list.append(max_rfr_tt_temp)
+field["max_rfr"] = max_rfr_list
+field["max_rfr_tt"] = max_rfr_tt_list
+max_rfr_finder_time = time.time() - max_rfr_finder_time_start
+print "Max R:FR time %d" %max_rfr_finder_time
+
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculates the 37% of the maximum R:FR
+field = field.convert_objects(convert_numeric=True)
+field["sen_mult"] = [0.37 for x in xrange(0, len(df))]
+field["sen_rfr"] = field["max_rfr"] * field["sen_mult"]
+del field["sen_mult"]
+
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate time to senescence
+sen = []
+sen_start = time.time()
+count = 0
+for plot in xrange(0, (len(df))):
+	count += 1
+	if type(rfr_df.loc["Plot%d" %(plot + 1)][0]) == str:
+		sen_temp = "NaN"
+	else:
+		sen_temp = senescence((field.iloc[plot]["max_rfr"]), 
+			field.iloc[plot]["sen_rfr"],
+			rfr_df.loc["Plot%d" %(plot + 1)])
+	sen.append(sen_temp)
+field["sen"] = sen
+senescence_time = time.time() - sen_start
+print "Senescence time %d" % senescence_time
+
+print field.head()
 total_time = time.time() - start_time
 print "Total time taken %d" %total_time
