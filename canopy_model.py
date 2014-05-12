@@ -138,14 +138,14 @@ def total_par_calc(start, stop, par, plot):
 		return total_par, circ_days_duration	
 	else:
 		canopy_duration_circ = circ_days(par, par_tt_start, par_tt_stop)
-		print "Type canopy_duration_circ %s" %type(canopy_duration_circ)
-
 		daily_par_list = []
 		for par_index in range(0, canopy_duration_circ):
-			daily_rfr = daily_rfr_calc((par_index), par, rfr_df.iloc[plot])
-			daily_par = daily_par_calc(par, daily_rfr, (par_index))
-			daily_par_list.append(daily_par)
-
+			try:
+				daily_rfr = daily_rfr_calc((par_index), par, rfr_df.iloc[plot])
+				daily_par = daily_par_calc(par, daily_rfr, (par_index))
+				daily_par_list.append(daily_par)
+			except IndexError:
+				daily_rfr = 0
 		
 		total_par = sum(daily_par_list)	
 	return total_par, canopy_duration_circ
@@ -310,21 +310,66 @@ field["anth_sen"] = field["sen"] - field["anth"]
 # than to rewrite it and make it more pythonic
 t_par_start = time.time()
 temp_par_list = []
+t_par_can_dur = []
 plot_count = 1
 for item in field["sen"]:
 	if np.isnan(item) == True:
-		temp_par_val = np.NAN
+		temp_par_val = np.NAN, np.NAN
 	else:
-		print item
-		print type(item)
 		temp_par_val = total_par_calc(0, item, par, plot_count)
-	temp_par_list.append(temp_par_val)
+		temp_par_list.append(temp_par_val[0])
+		t_can_dur.append(temp_par_val[1])
 	plot_count += 1
 
 field["total_par"] = temp_par_list
+field["t_can_dur_circ"] = t_can_dur
 t_par_elapsed = time.time() - t_par_start
-
 print "Total PAR time %d" %t_par_elapsed
+
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the PAR intercepted between sowing and gs31
+gs31_par_start = time.time()
+temp_gs31_par_list = []
+temp_gs31_par_dur = []
+plot_count = 1
+for item in field["gs31"]:
+if np.isnan(item) == True:
+		temp_par_val = np.NAN, np.NAN
+	else:
+		temp_par_val = total_par_calc(0, item, par, plot_count)
+	temp_gs31_par_list.append(temp_par_val[0])
+	temp_gs31_par_dur.append(temp_par_val[1])
+	plot_count += 1	
+
+field["par_gs31"] = temp_gs31_par_list
+field["par_gs31_dur_circ"] = temp_gs31_par_dur
+par_gs31_elapsed = time.time() - gs31_par_start
+print "GS31 PAR time %d" %par_gs31_elapsed
+
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate PAR between gs31_anth
+gs_31_anth_par_start = time.time()
+temp_gs31_anth_par_list = []
+temp_gs31_anth_par_dur = []
+plot_count = 1
+for item in field["gs31_anth"]:
+	if np.isnan(item) == True:
+		temp_par_val = np.NAN, np.NAN
+	else:
+		temp_par_val = total_par_calc(0, item, par, plot_count)
+	temp_gs31_anth_par_list.append(temp_par_val[0])
+	temp_gs31_anth_par_dur.append(temp_par_val[1])
+	plot_count += 1
+
+field["par_gs31_anth"] = temp_gs31_anth_par_list
+field["par_gs31_anth_dur_circ"] = temp_gs31_anth_par_dur
+par_gs31_anth_elapsed = time.time() - gs31_anth_par_start
+print "GS31 PAR time %d" %temp_gs31_par_list
+
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the par between anth and sen
+
+
 print field.head()
 total_time = time.time() - start_time
 print "Total time taken %d" %total_time
