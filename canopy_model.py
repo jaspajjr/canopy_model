@@ -51,12 +51,12 @@ def marquardt(f, x, y, p0):
 		out = [p[0], p[1], p[2], p[3], p[4], p[5]]
 	except RuntimeError:
 		#If curve_fit can't fit the equation to the data points
-		out = ["NaN", "NaN", "NaN", "NaN", "NaN", "NaN"]
+		out = [np.NAN, np.NAN, np.NAN, np.NAN, np.NAN, np.NAN]
 	return out
 
 def plot_rfr(p0):
 	if type(p0[0]) == str:
-		y_pred = 'NaN'
+		y_pred = np.NAN
 		return y_pred
 	y_pred = [f(a, p0) for a in xrange(0, 3001)]
 	return y_pred
@@ -89,21 +89,34 @@ def senescence(max_rfr, sen_rfr, rfr_list):
 def tt_to_par_tt_conversion(par, value):
 	# Converts the tt as an integer, to the tt measurement made in 
 	# the PAR  data file 
-	temp_par_df = par[par.tt > value]
-	temp_tt = temp_par_df.iloc[0][0]
+	try:
+		temp_par_df = par[par.tt > value]
+		temp_tt = np.float64(temp_par_df.iloc[0][0])
+	except IndexError:
+		temp_tt = np.float64(0)
 	return temp_tt
 
 def circ_days(par, start, stop):
 	# Calculates the number of days between two tt index values
-	temp_start = par[par.tt == start]
-	temp_stop = par[par.tt == stop]
+	if start == 0:
+		temp_start = 0
+	else:
+		try:
+			temp_start = par[par.tt == start].index[0]
+		except IndexError:
+			print "Shit, index Error"
+			print start
+	if stop == 0:
+		return np.NAN
+	else:
+		temp_stop = par[par.tt == stop].index[0]
 	return temp_stop - temp_start
 
 def daily_rfr_calc(par_index, par, rfr_list):
 	# Find the PAR interception on a given day
 	tt = par.iloc[par_index][0]
 	tt = int(round(tt))
-	daily_rfr = rfr_list[(a + 1)]
+	daily_rfr = rfr_list[(par_index + 1)]
 	return daily_rfr
 
 def daily_par_calc(par, daily_rfr, par_index):
@@ -111,7 +124,7 @@ def daily_par_calc(par, daily_rfr, par_index):
 	daily_par = daily_rfr * (0.5 * par["kipp"][par_index])	
 	return daily_par
 
-def total_par_calc(start, stop):
+def total_par_calc(start, stop, par, plot):
 	# Calculate the PAR intercepted between two days
 
 	# Convert the input termal time values, into their nearest 
@@ -119,17 +132,23 @@ def total_par_calc(start, stop):
 	# par measurements can then be used 
 	par_tt_start = tt_to_par_tt_conversion(par, start)
 	par_tt_stop = tt_to_par_tt_conversion(par, stop)
-	
-	canopy_duration_circ = circ_days(par, par_tt_start, par_tt_stop)
-	
-	daily_par_list = []
-	for count in range(0, canopy_duration_circ):
-		daily_rfr = daily_rfr_calc((par_index + count))
-		daily_par = daily_par_calc(par, daily_rfr, (par_index + count))
-		daily_par_list.append(daily_par)
+	if np.isnan(par_tt_stop) == True:
+		total_par = np.NAN
+		circ_days_duration = np.NAN
+		return total_par, circ_days_duration	
+	else:
+		canopy_duration_circ = circ_days(par, par_tt_start, par_tt_stop)
+		print "Type canopy_duration_circ %s" %type(canopy_duration_circ)
 
-	total_par = sum(daily_par_list)
-	return total_par, circ_days
+		daily_par_list = []
+		for par_index in range(0, canopy_duration_circ):
+			daily_rfr = daily_rfr_calc((par_index), par, rfr_df.iloc[plot])
+			daily_par = daily_par_calc(par, daily_rfr, (par_index))
+			daily_par_list.append(daily_par)
+
+		
+		total_par = sum(daily_par_list)	
+	return total_par, canopy_duration_circ
 
 def rfr_after_n(reference, n_days, par):
 	# Calculates the absolute R:FR value n days after the reference
@@ -150,11 +169,11 @@ Derivative related modules
 
 '''
 
-def f_prime(x, p0):
-	'''Calculates the value of the derivative according to p0
+'''def f_prime(x, p0):
+	#Calculates the value of the derivative according to p0
 	at the given x value
-	'''
-	c, b1, m1, a, b2, m2 = p0
+	
+	c, b1, m1, a, b2, m2 = p0'''
 
 '''
 Integral related modules
@@ -242,7 +261,7 @@ max_rfr_list = []
 max_rfr_tt_list = []
 for plot in xrange(0, len(df)):
 	if type(rfr_df.iloc[plot][0]) == str:
-		max_rfr_temp, max_rfr_tt_temp = "NaN", "NaN"
+		max_rfr_temp, max_rfr_tt_temp = np.NAN, np.NAN
 	else:
 		max_rfr_temp, max_rfr_tt_temp = max_rfr_finder(rfr_df.iloc[plot].tolist())
 	max_rfr_list.append(max_rfr_temp)
@@ -267,16 +286,45 @@ count = 0
 for plot in xrange(0, (len(df))):
 	count += 1
 	if type(rfr_df.loc["Plot%d" %(plot + 1)][0]) == str:
-		sen_temp = "NaN"
+		sen_temp = np.NAN
 	else:
 		sen_temp = senescence((field.iloc[plot]["max_rfr"]), 
 			field.iloc[plot]["sen_rfr"],
 			rfr_df.loc["Plot%d" %(plot + 1)])
 	sen.append(sen_temp)
 field["sen"] = sen
+field = field.convert_objects(convert_numeric=True)
 senescence_time = time.time() - sen_start
 print "Senescence time %d" % senescence_time
 
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate time from anthesis to senescence
+
+field["anth_sen"] = field["sen"] - field["anth"]
+
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the total PAR intercepted over the entire season
+# This could have been done as an apply function using the pandas
+# library, however, at the time of writing I didn't plan for that 
+# so it is quicker and more efficient to use the code as intended 
+# than to rewrite it and make it more pythonic
+t_par_start = time.time()
+temp_par_list = []
+plot_count = 1
+for item in field["sen"]:
+	if np.isnan(item) == True:
+		temp_par_val = np.NAN
+	else:
+		print item
+		print type(item)
+		temp_par_val = total_par_calc(0, item, par, plot_count)
+	temp_par_list.append(temp_par_val)
+	plot_count += 1
+
+field["total_par"] = temp_par_list
+t_par_elapsed = time.time() - t_par_start
+
+print "Total PAR time %d" %t_par_elapsed
 print field.head()
 total_time = time.time() - start_time
 print "Total time taken %d" %total_time
