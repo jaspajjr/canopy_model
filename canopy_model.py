@@ -88,12 +88,24 @@ def senescence(max_rfr, sen_rfr, rfr_list):
 
 def tt_to_par_tt_conversion(par, value):
 	# Converts the tt as an integer, to the tt measurement made in 
-	# the PAR  data file 
+	# the PAR  data file, outputs as float64 to allow for recognition
+	# in the PAR calculation modules 
 	try:
 		temp_par_df = par[par.tt > value]
 		temp_tt = np.float64(temp_par_df.iloc[0][0])
 	except IndexError:
 		temp_tt = np.float64(0)
+	return temp_tt
+
+def tt_to_par_tt_rfr_n(par, value):
+	# Converts the tt as an integer, to the tt measurement made in 
+	# the PAR  data file, outputs as float64 to allow for recognition
+	# in the PAR calculation modules 
+	try:
+		temp_par_df = par[par.tt > value]
+		temp_tt = int(temp_par_df.iloc[0][0])
+	except IndexError:
+		temp_tt = int(0)
 	return temp_tt
 
 def circ_days(par, start, stop):
@@ -139,7 +151,7 @@ def total_par_calc(start, stop, par, plot):
 	else:
 		canopy_duration_circ = circ_days(par, par_tt_start, par_tt_stop)
 		daily_par_list = []
-		for par_index in range(0, canopy_duration_circ):
+		for par_index in range(par_tt_start, par_tt_stop):
 			try:
 				daily_rfr = daily_rfr_calc((par_index), par, rfr_df.iloc[plot])
 				daily_par = daily_par_calc(par, daily_rfr, (par_index))
@@ -153,10 +165,14 @@ def total_par_calc(start, stop, par, plot):
 def rfr_after_n(reference, n_days, par, plot):
 	# Calculates the absolute R:FR value n days after the reference
 	# point. n_days is expected to be an integer
-	reference_index = tt_to_par_tt_conversion(par, reference)
-	n_days = reference_index + n_days
-	rfr_list = rfr_df.loc["Plot%d" %plot].tolist()
-	rfr_after_n_days = daily_rfr_calc(n_days, par, rfr_list)
+	if np.isnan(reference) == True:
+		rfr_after_n_days = np.NAN
+	else:
+		reference_index = tt_to_par_tt_rfr_n(par, reference)
+		n_days = reference_index + n_days
+		rfr_list = rfr_df.loc["Plot%d" %plot].tolist()
+		n_days = par[par.tt > n_days].iloc[n_days][0]
+		rfr_after_n_days = daily_rfr_calc(n_days, par, rfr_list)
 	return rfr_after_n_days
 
 '''
@@ -318,9 +334,11 @@ for item in field["sen"]:
 		temp_par_val = np.NAN, np.NAN
 	else:
 		temp_par_val = total_par_calc(0, item, par, plot_count)
+	print temp_par_val[0]
 	temp_par_list.append(temp_par_val[0])
 	t_par_can_dur.append(temp_par_val[1])
 	plot_count += 1
+print sum(temp_par_val)	
 field["total_par"] = temp_par_list
 field["t_can_dur_circ"] = t_par_can_dur
 t_par_elapsed = time.time() - t_par_start
@@ -362,7 +380,7 @@ for start, stop in zip(field["gs31"], field["anth"]):
 field["par_gs31_anth"] = temp_gs31_anth_par_list
 field["par_gs31_anth_dur_circ"] = temp_gs31_anth_par_dur
 par_gs31_anth_elapsed = time.time() - gs31_anth_par_start
-print "GS31 PAR time %d" %par_gs31_anth_elapsed
+print "GS31 to Anth PAR time %d" %par_gs31_anth_elapsed
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the par between anth and sen
@@ -370,7 +388,7 @@ anth_sen_par_time = time.time()
 temp_anth_sen_par_list = []
 temp_anth_sen_par_dur = []
 plot_count = 1
-for item in zip(field["anth"], field["sen"]):
+for start, stop in zip(field["anth"], field["sen"]):
 	if np.isnan(start) == True or np.isnan(stop) == True:
 		temp_par_val = np.NAN, np.NAN
 	else:
@@ -386,11 +404,10 @@ print "PAR Anth - Sen %d" %par_anth_sen_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the rfr 5 days after anthesis
 #field["rfr_5_after_anth"] = 
-#for x in range(1, len(field)):
-#	print rfr_df.loc["Plot%d" %x]
 
-a = [rfr_after_n(field["anth"][x], 5, par, (x)) for x in range(1, (len(field) + 1))]
+field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_test.csv")
 
 print field.head()
 total_time = time.time() - start_time
 print "Total time taken %d" %total_time
+a = [rfr_after_n(field["anth"][x], 5, par, (x)) for x in range(1, (len(field) + 1))]
