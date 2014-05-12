@@ -150,11 +150,12 @@ def total_par_calc(start, stop, par, plot):
 		total_par = sum(daily_par_list)	
 	return total_par, canopy_duration_circ
 
-def rfr_after_n(reference, n_days, par):
+def rfr_after_n(reference, n_days, par, plot):
 	# Calculates the absolute R:FR value n days after the reference
 	# point. n_days is expected to be an integer
 	reference_index = tt_to_par_tt_conversion(par, reference)
 	n_days = reference_index + n_days
+	rfr_list = rfr_df.loc["Plot%d" %plot].tolist()
 	rfr_after_n_days = daily_rfr_calc(n_days, par, rfr_list)
 	return rfr_after_n_days
 
@@ -205,9 +206,9 @@ df = df.loc[1:]
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Set up the dataframe which will ouput the final values
 field = pd.DataFrame(index=df.index)
-field["gs_31"] = anth["gs_31"]
+field["gs31"] = anth["gs_31"]
 field["anth"] = anth["anth"]
-field["gs_31_anth"] = field["anth"] - field["gs_31"]
+field["gs31_anth"] = field["anth"] - field["gs31"]
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Setup the dataframe which will store the parameter values
@@ -317,12 +318,11 @@ for item in field["sen"]:
 		temp_par_val = np.NAN, np.NAN
 	else:
 		temp_par_val = total_par_calc(0, item, par, plot_count)
-		temp_par_list.append(temp_par_val[0])
-		t_can_dur.append(temp_par_val[1])
+	temp_par_list.append(temp_par_val[0])
+	t_par_can_dur.append(temp_par_val[1])
 	plot_count += 1
-
 field["total_par"] = temp_par_list
-field["t_can_dur_circ"] = t_can_dur
+field["t_can_dur_circ"] = t_par_can_dur
 t_par_elapsed = time.time() - t_par_start
 print "Total PAR time %d" %t_par_elapsed
 
@@ -333,14 +333,13 @@ temp_gs31_par_list = []
 temp_gs31_par_dur = []
 plot_count = 1
 for item in field["gs31"]:
-if np.isnan(item) == True:
+	if np.isnan(item) == True:
 		temp_par_val = np.NAN, np.NAN
 	else:
 		temp_par_val = total_par_calc(0, item, par, plot_count)
 	temp_gs31_par_list.append(temp_par_val[0])
 	temp_gs31_par_dur.append(temp_par_val[1])
 	plot_count += 1	
-
 field["par_gs31"] = temp_gs31_par_list
 field["par_gs31_dur_circ"] = temp_gs31_par_dur
 par_gs31_elapsed = time.time() - gs31_par_start
@@ -348,27 +347,49 @@ print "GS31 PAR time %d" %par_gs31_elapsed
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate PAR between gs31_anth
-gs_31_anth_par_start = time.time()
+gs31_anth_par_start = time.time()
 temp_gs31_anth_par_list = []
 temp_gs31_anth_par_dur = []
 plot_count = 1
-for item in field["gs31_anth"]:
-	if np.isnan(item) == True:
+for start, stop in zip(field["gs31"], field["anth"]):
+	if np.isnan(start) == True or np.isnan(stop) == True:
 		temp_par_val = np.NAN, np.NAN
 	else:
-		temp_par_val = total_par_calc(0, item, par, plot_count)
+		temp_par_val = total_par_calc(start, stop, par, plot_count)
 	temp_gs31_anth_par_list.append(temp_par_val[0])
 	temp_gs31_anth_par_dur.append(temp_par_val[1])
 	plot_count += 1
-
 field["par_gs31_anth"] = temp_gs31_anth_par_list
 field["par_gs31_anth_dur_circ"] = temp_gs31_anth_par_dur
 par_gs31_anth_elapsed = time.time() - gs31_anth_par_start
-print "GS31 PAR time %d" %temp_gs31_par_list
+print "GS31 PAR time %d" %par_gs31_anth_elapsed
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the par between anth and sen
+anth_sen_par_time = time.time()
+temp_anth_sen_par_list = []
+temp_anth_sen_par_dur = []
+plot_count = 1
+for item in zip(field["anth"], field["sen"]):
+	if np.isnan(start) == True or np.isnan(stop) == True:
+		temp_par_val = np.NAN, np.NAN
+	else:
+		temp_par_val = total_par_calc(start, stop, par, plot_count)
+	temp_anth_sen_par_list.append(temp_par_val[0])
+	temp_anth_sen_par_dur.append(temp_par_val[1])
+	plot_count += 1
+field["par_anth_sen"] = temp_anth_sen_par_list
+field["par_anth_sen_dur_circ"] = temp_anth_sen_par_dur
+par_anth_sen_elapsed = time.time() - anth_sen_par_time
+print "PAR Anth - Sen %d" %par_anth_sen_elapsed
 
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the rfr 5 days after anthesis
+#field["rfr_5_after_anth"] = 
+#for x in range(1, len(field)):
+#	print rfr_df.loc["Plot%d" %x]
+
+a = [rfr_after_n(field["anth"][x], 5, par, (x)) for x in range(1, (len(field) + 1))]
 
 print field.head()
 total_time = time.time() - start_time
