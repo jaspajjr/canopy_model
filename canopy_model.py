@@ -162,6 +162,38 @@ def total_par_calc(start, stop, par, plot):
 		total_par = sum(daily_par_list)	
 	return total_par, canopy_duration_circ
 
+def par_calc(start, stop, par, plot, p0):
+	'''calculate the time par itercepted between a and b'''
+	# Need to get tt value from every day between start and stop
+	# Calculate the index of start
+	if np.isnan(start) == True or np.isnan(stop) == True:
+		print "caught it, in par_calc"
+		return np.NAN, np.NAN
+	start_index = par[par.tt > start].index[0]
+	# Calculate the index of stop
+	stop_index = par[par.tt > stop].index[0]
+	# Calculate duration in circadian days
+	circ_days = stop_index - start_index
+	# Need to get p0 and tt 
+	p0_plot = p0.loc["Plot%d" %plot]
+	p0_plot = p0_plot[1:]
+	# Need to get rfr value for each tt between start and stop
+	x = [par["tt"].loc[count] for count in range(start_index, stop_index)]
+	# Need to get KIPP value from every day between start and stop
+	kipp = [par["kipp"].loc[count] for count in range(start_index, stop_index)]
+	# Calculate f(x) for each x in the x list
+	rfr = [f(item, p0_plot) for item in x]
+	# Calculate PAR value from the kipp values
+	par = [(0.5 * item) for item in kipp]
+	# Convert list to Series
+	rfr = pd.Series(rfr)
+	# Multiply each rfr value by corresponding KIPP / 2
+	par = pd.Series(par)
+	par_int = rfr * par
+	# Sum the results of that for each tt 
+	t_par = sum(par_int)
+	return t_par, circ_days
+
 def rfr_after_n(reference, n_days, par, plot):
 	# Calculates the absolute R:FR value n days after the reference
 	# point. n_days is expected to be an integer
@@ -245,6 +277,7 @@ marquardt_time = time.time() - marquardt_start
 p0 = p0.transpose()
 p0.columns = ["c", "b1", "m1", "a", "b2", "m2"]
 print "Marquardt time %d" %marquardt_time
+p0.to_csv("C:\\users\\john\\canopy_model\\p0.csv")
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculating the residuals
@@ -270,6 +303,7 @@ for plot in xrange(0, (len(df))):
 rfr_df = rfr_df.transpose()
 rfr_time = time.time() - rfr_start
 print "rfr time %d" %rfr_time
+rfr_df.to_csv("C:\\users\\john\\canopy_model\\rfr.csv")
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the maximum rfr, and tt to max rfr
@@ -320,6 +354,7 @@ print "Senescence time %d" % senescence_time
 field["anth_sen"] = field["sen"] - field["anth"]
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
+'''
 # Calculate the total PAR intercepted over the entire season
 # This could have been done as an apply function using the pandas
 # library, however, at the time of writing I didn't plan for that 
@@ -343,7 +378,23 @@ field["total_par"] = temp_par_list
 field["t_can_dur_circ"] = t_par_can_dur
 t_par_elapsed = time.time() - t_par_start
 print "Total PAR time %d" %t_par_elapsed
-
+'''
+# Calculate PAR between sowing and senescence
+t_par_start = time.time()
+t_par = []
+t_par_dur = []
+plot_count = 1
+for item in field["sen"]:
+	print plot_count
+	print type(item)
+	if np.isnan == True:
+		temp_par_val = np.NAN, np.NAN
+	else:
+		temp_par_val = par_calc(0, item, par, plot_count, p0)
+	t_par.append(temp_par_val[0])
+	t_par_dur.append(temp_par_val[1])
+	plot_count += 1
+field["NEW Total PAR calculation"] = t_par
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the PAR intercepted between sowing and gs31
 gs31_par_start = time.time()
