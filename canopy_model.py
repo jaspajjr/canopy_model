@@ -176,7 +176,10 @@ def par_calc(start, stop, par, plot, p0):
 	circ_days = stop_index - start_index
 	# Need to get p0 and tt 
 	p0_plot = p0.loc["Plot%d" %plot]
-	p0_plot = p0_plot[1:]
+	print type(p0_plot)
+	print len(p0_plot)
+	print p0_plot
+	#p0_plot = p0_plot[1:]
 	# Need to get rfr value for each tt between start and stop
 	x = [par["tt"].loc[count] for count in range(start_index, stop_index)]
 	# Need to get KIPP value from every day between start and stop
@@ -272,7 +275,7 @@ marquardt_start = time.time()
 for plot in xrange(0, len(df)):
 	temp = []
 	temp_p0 = marquardt(f_fit, tt, df.iloc[plot], p0_initial)
-	p0["Plot%d" %plot] = temp_p0
+	p0["Plot%d" %(plot + 1)] = temp_p0
 marquardt_time = time.time() - marquardt_start
 p0 = p0.transpose()
 p0.columns = ["c", "b1", "m1", "a", "b2", "m2"]
@@ -396,7 +399,7 @@ for item in field["sen"]:
 	plot_count += 1
 field["NEW Total PAR calculation"] = t_par
 ''''''''''''''''''''''''''''''''''''''''''''''''
-# Calculate the PAR intercepted between sowing and gs31
+'''# Calculate the PAR intercepted between sowing and gs31
 gs31_par_start = time.time()
 temp_gs31_par_list = []
 temp_gs31_par_dur = []
@@ -455,7 +458,7 @@ print "PAR Anth - Sen %d" %par_anth_sen_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the rfr 5 days after anthesis
 #field["rfr_5_after_anth"] = 
-
+'''
 field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_test.csv")
 
 print field.head()
