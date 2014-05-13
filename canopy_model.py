@@ -136,32 +136,6 @@ def daily_par_calc(par, daily_rfr, par_index):
 	daily_par = daily_rfr * (0.5 * par["kipp"][par_index])	
 	return daily_par
 
-def total_par_calc(start, stop, par, plot):
-	# Calculate the PAR intercepted between two days
-
-	# Convert the input termal time values, into their nearest 
-	# equivalents in the par file. The corresponding
-	# par measurements can then be used 
-	par_tt_start = tt_to_par_tt_conversion(par, start)
-	par_tt_stop = tt_to_par_tt_conversion(par, stop)
-	if np.isnan(par_tt_stop) == True:
-		total_par = np.NAN
-		circ_days_duration = np.NAN
-		return total_par, circ_days_duration	
-	else:
-		canopy_duration_circ = circ_days(par, par_tt_start, par_tt_stop)
-		daily_par_list = []
-		for par_index in range(par_tt_start, par_tt_stop):
-			try:
-				daily_rfr = daily_rfr_calc((par_index), par, rfr_df.iloc[plot])
-				daily_par = daily_par_calc(par, daily_rfr, (par_index))
-				daily_par_list.append(daily_par)
-			except IndexError:
-				daily_rfr = 0
-		
-		total_par = sum(daily_par_list)	
-	return total_par, canopy_duration_circ
-
 def par_calc(start, stop, par, plot, p0):
 	'''calculate the time par itercepted between a and b'''
 	# Need to get tt value from every day between start and stop
@@ -357,31 +331,12 @@ print "Senescence time %d" % senescence_time
 field["anth_sen"] = field["sen"] - field["anth"]
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
-'''
 # Calculate the total PAR intercepted over the entire season
 # This could have been done as an apply function using the pandas
 # library, however, at the time of writing I didn't plan for that 
 # so it is quicker and more efficient to use the code as intended 
 # than to rewrite it and make it more pythonic
-t_par_start = time.time()
-temp_par_list = []
-t_par_can_dur = []
-plot_count = 1
-for item in field["sen"]:
-	if np.isnan(item) == True:
-		temp_par_val = np.NAN, np.NAN
-	else:
-		temp_par_val = total_par_calc(0, item, par, plot_count)
-	print temp_par_val[0]
-	temp_par_list.append(temp_par_val[0])
-	t_par_can_dur.append(temp_par_val[1])
-	plot_count += 1
-print sum(temp_par_val)	
-field["total_par"] = temp_par_list
-field["t_can_dur_circ"] = t_par_can_dur
-t_par_elapsed = time.time() - t_par_start
-print "Total PAR time %d" %t_par_elapsed
-'''
+
 # Calculate PAR between sowing and senescence
 t_par_start = time.time()
 t_par = []
@@ -397,8 +352,9 @@ for item in field["sen"]:
 	t_par.append(temp_par_val[0])
 	t_par_dur.append(temp_par_val[1])
 	plot_count += 1
-field["NEW Total PAR calculation"] = t_par
+field["t_par"] = t_par
 ''''''''''''''''''''''''''''''''''''''''''''''''
+
 '''# Calculate the PAR intercepted between sowing and gs31
 gs31_par_start = time.time()
 temp_gs31_par_list = []
