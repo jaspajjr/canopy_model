@@ -141,7 +141,6 @@ def par_calc(start, stop, par, plot, p0):
 	# Need to get tt value from every day between start and stop
 	# Calculate the index of start
 	if np.isnan(start) == True or np.isnan(stop) == True:
-		print "caught it, in par_calc"
 		return np.NAN, np.NAN
 	start_index = par[par.tt > start].index[0]
 	# Calculate the index of stop
@@ -150,10 +149,6 @@ def par_calc(start, stop, par, plot, p0):
 	circ_days = stop_index - start_index
 	# Need to get p0 and tt 
 	p0_plot = p0.loc["Plot%d" %plot]
-	print type(p0_plot)
-	print len(p0_plot)
-	print p0_plot
-	#p0_plot = p0_plot[1:]
 	# Need to get rfr value for each tt between start and stop
 	x = [par["tt"].loc[count] for count in range(start_index, stop_index)]
 	# Need to get KIPP value from every day between start and stop
@@ -336,15 +331,13 @@ field["anth_sen"] = field["sen"] - field["anth"]
 # library, however, at the time of writing I didn't plan for that 
 # so it is quicker and more efficient to use the code as intended 
 # than to rewrite it and make it more pythonic
-
+''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate PAR between sowing and senescence
 t_par_start = time.time()
 t_par = []
 t_par_dur = []
 plot_count = 1
 for item in field["sen"]:
-	print plot_count
-	print type(item)
 	if np.isnan == True:
 		temp_par_val = np.NAN, np.NAN
 	else:
@@ -353,71 +346,69 @@ for item in field["sen"]:
 	t_par_dur.append(temp_par_val[1])
 	plot_count += 1
 field["t_par"] = t_par
+field["canopy_duration"] = t_par_dur
+t_par_elapsed = time.time() - t_par_start
+print "Total PAR intercepted %d seconds" %t_par_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
-
-'''# Calculate the PAR intercepted between sowing and gs31
-gs31_par_start = time.time()
-temp_gs31_par_list = []
-temp_gs31_par_dur = []
+# Calculate the PAR between sowing and GS31
+gs31_par_time = time.time()
+gs31_par = []
+gs31_par_dur = []
 plot_count = 1
-for item in field["gs31"]:
-	if np.isnan(item) == True:
+for stop in field["gs31"]:
+	if np.isnan(stop) == True:
 		temp_par_val = np.NAN, np.NAN
 	else:
-		temp_par_val = total_par_calc(0, item, par, plot_count)
-	temp_gs31_par_list.append(temp_par_val[0])
-	temp_gs31_par_dur.append(temp_par_val[1])
-	plot_count += 1	
-field["par_gs31"] = temp_gs31_par_list
-field["par_gs31_dur_circ"] = temp_gs31_par_dur
-par_gs31_elapsed = time.time() - gs31_par_start
-print "GS31 PAR time %d" %par_gs31_elapsed
-
+		temp_par_val = par_calc(0, stop, par, plot_count, p0)
+	gs31_par.append(temp_par_val[0])
+	gs31_par_dur.append(temp_par_val[1])
+	plot_count += 1
+field["gs31_par"] = gs31_par
+field["sow_gs31_dur"] = gs31_par_dur
+gs31_par_elapsed = time.time() - gs31_par_time
+print "PAR to GS31 %d" %gs31_par_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate PAR between gs31_anth
-gs31_anth_par_start = time.time()
-temp_gs31_anth_par_list = []
-temp_gs31_anth_par_dur = []
+gs31_anth_par_time = time.time()
+gs31_anth_par_list = []
+gs31_anth_par_dur = []
 plot_count = 1
 for start, stop in zip(field["gs31"], field["anth"]):
 	if np.isnan(start) == True or np.isnan(stop) == True:
 		temp_par_val = np.NAN, np.NAN
 	else:
-		temp_par_val = total_par_calc(start, stop, par, plot_count)
-	temp_gs31_anth_par_list.append(temp_par_val[0])
-	temp_gs31_anth_par_dur.append(temp_par_val[1])
+		temp_par_val = par_calc(start, stop, par, plot_count, p0)
+	gs31_anth_par_list.append(temp_par_val[0])
+	gs31_anth_par_dur.append(temp_par_val[1])
 	plot_count += 1
-field["par_gs31_anth"] = temp_gs31_anth_par_list
-field["par_gs31_anth_dur_circ"] = temp_gs31_anth_par_dur
-par_gs31_anth_elapsed = time.time() - gs31_anth_par_start
+field["par_gs31_anth"] = gs31_anth_par_list
+field["gs31_anth_dur"] = gs31_anth_par_dur
+par_gs31_anth_elapsed = time.time() - gs31_anth_par_time
 print "GS31 to Anth PAR time %d" %par_gs31_anth_elapsed
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the par between anth and sen
 anth_sen_par_time = time.time()
-temp_anth_sen_par_list = []
-temp_anth_sen_par_dur = []
+anth_sen_par_list = []
+anth_sen_par_dur_list = []
 plot_count = 1
 for start, stop in zip(field["anth"], field["sen"]):
 	if np.isnan(start) == True or np.isnan(stop) == True:
 		temp_par_val = np.NAN, np.NAN
 	else:
-		temp_par_val = total_par_calc(start, stop, par, plot_count)
-	temp_anth_sen_par_list.append(temp_par_val[0])
-	temp_anth_sen_par_dur.append(temp_par_val[1])
+		temp_par_val = par_calc(start, stop, par, plot_count, p0)
+	anth_sen_par_list.append(temp_par_val[0])
+	anth_sen_par_dur_list.append(temp_par_val[1])
 	plot_count += 1
-field["par_anth_sen"] = temp_anth_sen_par_list
-field["par_anth_sen_dur_circ"] = temp_anth_sen_par_dur
+field["par_anth_sen"] = anth_sen_par_list
+field["anth_sen_dur"] = anth_sen_par_dur_list
 par_anth_sen_elapsed = time.time() - anth_sen_par_time
-print "PAR Anth - Sen %d" %par_anth_sen_elapsed
+print "Anth - Sen PAR time %d seconds" %par_anth_sen_elapsed
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
-# Calculate the rfr 5 days after anthesis
-#field["rfr_5_after_anth"] = 
-'''
+
 field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_test.csv")
 
-print field.head()
 total_time = time.time() - start_time
 print "Total time taken %d" %total_time
-a = [rfr_after_n(field["anth"][x], 5, par, (x)) for x in range(1, (len(field) + 1))]
+#a = [rfr_after_n(field["anth"][x], 5, par, (x)) for x in range(1, (len(field) + 1))]
