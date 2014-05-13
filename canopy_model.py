@@ -179,6 +179,18 @@ def rfr_after_n(reference, n_days, par, plot):
 		rfr_after_n_days = daily_rfr_calc(n_days, par, rfr_list)
 	return rfr_after_n_days
 
+def rfr_n(reference, n, plot):
+	if np.isnan(start) == True:
+		return np.NAN
+	# Find the index of the starting tt value
+	start_index = par[par.tt > start].index[0]
+	# get the index n days after start_index
+	out_index = start_index + n
+	out_tt = par["tt"].ix[out_index]
+	p0_plot = p0.loc["Plot%d" %plot]
+	rfr_out = f(out_tt, p0_plot)
+	return rfr_out
+
 '''
 Derivative related modules
 '''
@@ -406,7 +418,18 @@ par_anth_sen_elapsed = time.time() - anth_sen_par_time
 print "Anth - Sen PAR time %d seconds" %par_anth_sen_elapsed
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
-
+# Calculate the rfr values 5, 10, 15 days after anthesis
+field["rfr_5_anth"] = [rfr_n(field["anth"], 5, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_10_anth"] = [rfr_n(field["anth"], 10, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_15_anth"] = [rfr_n(field["anth"], 15, x) for x in xrange(1, (len(field) + 1))]
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the rfr value 5, 10, 15 days before anthesis
+field["rfr_5_before_anth"] = [rfr_n(field["anth"], -5, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_10_before_anth"] = [rfr_n(field["anth"], -10, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_15_before_anth"] = [rfr_n(field["anth"], -15, x) for x in xrange(1, (len(field) + 1))]
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the
+''''''''''''''''''''''''''''''''''''''''''''''''
 field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_test.csv")
 
 total_time = time.time() - start_time
