@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np 
 import matplotlib.pyplot as plt 
 import sympy as sym 
+from sympy import exp
 from scipy.optimize import curve_fit
 from scipy.integrate import quad
 start_time = time.time()
@@ -80,10 +81,12 @@ def senescence(max_rfr, sen_rfr, rfr_list):
 			temp_sen_list.append(count)
 
 	if len(temp_sen_list) == 0:
-		sen = "NaN"
+		sen = np.NAN
 		return sen
 	else:
 		sen = temp_sen_list[-1]
+		if sen < 1000:
+			sen = np.NAN 
 	return sen
 
 def tt_to_par_tt_conversion(par, value):
@@ -166,7 +169,9 @@ def par_calc(start, stop, par, plot, p0):
 	t_par = sum(par_int)
 	return t_par, circ_days
 
-def rfr_n(reference, n, plot):
+def rfr_n(start, n, plot):
+	''' Calculate the change in rfr value n days after 
+	reference '''
 	if np.isnan(start) == True:
 		return np.NAN
 	# Find the index of the starting tt value
@@ -181,20 +186,27 @@ def rfr_n(reference, n, plot):
 '''
 Derivative related modules
 '''
-'''def dy_f(p0, x):
-	# The derivative of the function f(x) at x
-	c, b1, m1, a, b2, m2 = p0
-	dy_f_x = ((b1 * c * exp(-b1 * (-m1 + x))) / (np.power(1 + exp(-b1 * (-m1 + x)), 2))) * (c * exp(-exp(-b2 * (-m2 + x))) + a) + ((np.power(c, 2) * b2 * exp(-b2 * (-m2 + x)) * exp(-exp(-b2 * (-m2 + x)))) / 1 + exp(-b1 * (-m1 + x)))
-	return dy_f_x
+def f_prime(reference_x, n, plot):
+	''' Calculate the rate of change in the canopy formation at 
+	point reference_x, given the parameters for the given plot in p0'''
+	if np.isnan(reference_x) == True:
+		return np.NAN
+	# Find index of the starting tt value
+	start_index = par[par.tt > reference_x].index[0]
+	# get the index n days after start_index
+	out_index = start_index + n
+	out_tt = par["tt"].ix[out_index]
 
-'''
-
-'''def f_prime(x, p0):
-	#Calculates the value of the derivative according to p0
-	at the given x value
-	
-	c, b1, m1, a, b2, m2 = p0'''
-
+	p0_plot = p0.loc["Plot%d" %plot]
+	if np.isnan(p0_plot[0]) == True:
+		return np.NAN
+	else:
+		x = sym.symbols("x")
+		c, b1, m1, a, b2, m2 = p0_plot
+		f = (c / (1 + exp(-b1 * (x - m1)))) * (a + (c * exp(-exp(-b2 * (x - m2)))))
+		fx = sym.diff(f, x)
+		dx_dy = fx.evalf(n=5, subs={x: reference_x})
+	return dx_dy
 '''
 Integral related modules
 '''
@@ -408,14 +420,14 @@ print "Anth - Sen PAR time %d seconds" %par_anth_sen_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 rfr_n_time = time.time()
 # Calculate the rfr values 5, 10, 15 days after anthesis
-field["rfr_5_anth"] = [rfr_n(field["anth"], 5, x) for x in xrange(1, (len(field) + 1))]
-field["rfr_10_anth"] = [rfr_n(field["anth"], 10, x) for x in xrange(1, (len(field) + 1))]
-field["rfr_15_anth"] = [rfr_n(field["anth"], 15, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_5_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 5, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_10_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 10, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_15_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 15, x) for x in xrange(1, (len(field) + 1))]
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the rfr value 5, 10, 15 days before anthesis
-field["rfr_5_before_anth"] = [rfr_n(field["anth"], -5, x) for x in xrange(1, (len(field) + 1))]
-field["rfr_10_before_anth"] = [rfr_n(field["anth"], -10, x) for x in xrange(1, (len(field) + 1))]
-field["rfr_15_before_anth"] = [rfr_n(field["anth"], -15, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_5_before_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], -5, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_10_before_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], -10, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_15_before_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], -15, x) for x in xrange(1, (len(field) + 1))]
 rfr_n_elapsed = time.time() - rfr_n_time
 print "R:FR after n completed, %d" %rfr_n_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
@@ -468,7 +480,6 @@ int_gs31_anth_elapsed = time.time() - int_gs31_anth_time
 print "integral between gs31 and anth %d" %int_gs31_anth_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the integral between anthesis and senescence
-
 int_anth_sen_time = time.time()
 int_anth_sen_list = []
 plot_count = 1
@@ -483,8 +494,28 @@ field["int_anth_sen"] = int_anth_sen_list
 int_anth_sen_elapsed = time.time() - int_anth_sen_time
 print "integral between anthesis and senescence %d" %int_anth_sen_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
+dy_time = time.time()
+# Calculate the derivative at gs31 and at anth
+field["dy_at_gs31"] = [f_prime(field["gs31"].iloc[(x - 1)], 0, x) for x in xrange(1, (len(field) + 1))]
+field["dy_at_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 0, x) for x in xrange(1, (len(field) + 1))]
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the derivative 5, 10, 15 days after anthesis
+field["dy_5_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 5, x) for x in xrange(1, (len(field) + 1))]
+field["dy_10_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 10, x) for x in xrange(1, (len(field) + 1))]
+field["dy_15_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 15, x) for x in xrange(1, (len(field) + 1))]
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the derivative 5, 10, 15 days before anthesis
+field["dy_5_pre_anth"] = [f_prime(field["anth"].iloc[(x - 1)], -5, x) for x in xrange(1, (len(field) + 1))]
+field["dy_10_pre_anth"] = [f_prime(field["anth"].iloc[(x - 1)], -10, x) for x in xrange(1, (len(field) + 1))]
+field["dy_15_pre_anth"] = [f_prime(field["anth"].iloc[(x - 1)], -15, x) for x in xrange(1, (len(field) + 1))]
+field["dy_5_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 5, x) for x in xrange(1, (len(field) + 1))]
 
-field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_test.csv")
+dy_time_elapsed = time.time() - dy_time
+print "Derivative time %d" %dy_time_elapsed
+''''''''''''''''''''''''''''''''''''''''''''''''
+
+field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model.csv")
+
 total_time = time.time() - start_time
+print "Modelling finished"
 print "Total time taken %d" %total_time
-
