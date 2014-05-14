@@ -166,19 +166,6 @@ def par_calc(start, stop, par, plot, p0):
 	t_par = sum(par_int)
 	return t_par, circ_days
 
-def rfr_after_n(reference, n_days, par, plot):
-	# Calculates the absolute R:FR value n days after the reference
-	# point. n_days is expected to be an integer
-	if np.isnan(reference) == True:
-		rfr_after_n_days = np.NAN
-	else:
-		reference_index = tt_to_par_tt_rfr_n(par, reference)
-		n_days = reference_index + n_days
-		rfr_list = rfr_df.loc["Plot%d" %plot].tolist()
-		n_days = par[par.tt > n_days].iloc[n_days][0]
-		rfr_after_n_days = daily_rfr_calc(n_days, par, rfr_list)
-	return rfr_after_n_days
-
 def rfr_n(reference, n, plot):
 	if np.isnan(start) == True:
 		return np.NAN
@@ -212,15 +199,30 @@ Derivative related modules
 Integral related modules
 '''
 
-def integral_calc(p0, start, stop):
+def integral_calc(start, stop, p0):
 	''' Calculates the definite integral between start and stop, 
 	given parameters p0
 	'''
-	# The equation to be fitted, however with the parameters stored in p0
-	c, b1, m1, a, b2, m2 = p0
+	'''# The equation to be fitted, however with the parameters stored in p0
+	p0_plot = p0.loc["Plot%d" %plot]
+	c, b1, m1, a, b2, m2 = p0_plot
 	temp_f = (c / (1 + np.exp(-b1 * (x - m1)))) * (a + (c * np.exp((-1 * (np.exp(-b2 * (x - m2)))))))
 	ans, err = quad(temp_f, start, stop)
-	return ans
+	return ans'''
+	int_list = []
+	plot = 1
+	for item1, item2 in zip(start, stop):
+		#print type(item1), type(item2)
+		#print item1, item2
+		if np.isnan(item1) == True or np.isnan(item2) == True:
+			int_list.append(np.NAN)
+		else:
+			p0_plot = p0.loc["Plot%d" %plot]
+			c, b1, m1, a, b2, m2 = p0_plot
+			temp_f = lambda x: (c / (1 + np.exp(-b1 * (x - m1)))) * (a + (c * np.exp((-1 * (np.exp(-b2 * (x - m2)))))))
+			ans, err = quad(temp_f, item1, item2)
+			int_list.append(ans)
+	return int_list
 
 '''
 ########################################################################
@@ -418,6 +420,7 @@ par_anth_sen_elapsed = time.time() - anth_sen_par_time
 print "Anth - Sen PAR time %d seconds" %par_anth_sen_elapsed
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
+rfr_n_time = time.time()
 # Calculate the rfr values 5, 10, 15 days after anthesis
 field["rfr_5_anth"] = [rfr_n(field["anth"], 5, x) for x in xrange(1, (len(field) + 1))]
 field["rfr_10_anth"] = [rfr_n(field["anth"], 10, x) for x in xrange(1, (len(field) + 1))]
@@ -427,11 +430,20 @@ field["rfr_15_anth"] = [rfr_n(field["anth"], 15, x) for x in xrange(1, (len(fiel
 field["rfr_5_before_anth"] = [rfr_n(field["anth"], -5, x) for x in xrange(1, (len(field) + 1))]
 field["rfr_10_before_anth"] = [rfr_n(field["anth"], -10, x) for x in xrange(1, (len(field) + 1))]
 field["rfr_15_before_anth"] = [rfr_n(field["anth"], -15, x) for x in xrange(1, (len(field) + 1))]
+rfr_n_elapsed = time.time() - rfr_n_time
+print "R:FR after n completed, %d" %rfr_n_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
-# Calculate the
+# Calculate the integral between the start and end of the canopy
+''''''''''''''''''''''''''''''''''''''''''''''''
+int_sen_time = time.time()
+int_list_maker = [0 for x in xrange(0, len(field["sen"]))]
+int_list_test = [integral_calc(int_list_maker, field["sen"], p0)]
+print int_list_test, len(int_list_test)
+#field["integral_until_sen"] 
+int_sen_elapsed = time.time() - int_sen_time
+print "Integral from start to senescence %d" %int_sen_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_test.csv")
-
 total_time = time.time() - start_time
 print "Total time taken %d" %total_time
-#a = [rfr_after_n(field["anth"][x], 5, par, (x)) for x in range(1, (len(field) + 1))]
+
