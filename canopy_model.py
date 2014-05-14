@@ -198,31 +198,17 @@ Derivative related modules
 '''
 Integral related modules
 '''
-
-def integral_calc(start, stop, p0):
-	''' Calculates the definite integral between start and stop, 
-	given parameters p0
-	'''
-	'''# The equation to be fitted, however with the parameters stored in p0
-	p0_plot = p0.loc["Plot%d" %plot]
-	c, b1, m1, a, b2, m2 = p0_plot
-	temp_f = (c / (1 + np.exp(-b1 * (x - m1)))) * (a + (c * np.exp((-1 * (np.exp(-b2 * (x - m2)))))))
-	ans, err = quad(temp_f, start, stop)
-	return ans'''
-	int_list = []
-	plot = 1
-	for item1, item2 in zip(start, stop):
-		#print type(item1), type(item2)
-		#print item1, item2
-		if np.isnan(item1) == True or np.isnan(item2) == True:
-			int_list.append(np.NAN)
-		else:
-			p0_plot = p0.loc["Plot%d" %plot]
-			c, b1, m1, a, b2, m2 = p0_plot
-			temp_f = lambda x: (c / (1 + np.exp(-b1 * (x - m1)))) * (a + (c * np.exp((-1 * (np.exp(-b2 * (x - m2)))))))
-			ans, err = quad(temp_f, item1, item2)
-			int_list.append(ans)
-	return int_list
+def int_calc(start, stop, plot):
+	# Calculates the integral of the function f_temp, the main function, with the
+	# parameters of the specific plot, between points start and stop
+	if np.isnan(start) == True or np.isnan(stop) == True:
+		return np.NAN, np.NAN
+	else:
+		p0_plot = p0.loc["Plot%d" %plot]
+		c, b1, m1, a, b2, m2 = p0_plot 
+		f_temp = lambda x: (c / (1 + np.exp(-b1 * (x - m1)))) * (a + (c * np.exp((-1 * (np.exp(-b2 * (x - m2)))))))
+		ans, err = quad(f_temp, start, stop)
+	return ans, err 
 
 '''
 ########################################################################
@@ -434,15 +420,70 @@ rfr_n_elapsed = time.time() - rfr_n_time
 print "R:FR after n completed, %d" %rfr_n_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the integral between the start and end of the canopy
-''''''''''''''''''''''''''''''''''''''''''''''''
+
 int_sen_time = time.time()
-int_list_maker = [0 for x in xrange(0, len(field["sen"]))]
-int_list_test = [integral_calc(int_list_maker, field["sen"], p0)]
-print int_list_test, len(int_list_test)
-#field["integral_until_sen"] 
+int_list = []
+plot_count = 1
+for stop in field["sen"]:
+	if np.isnan(stop) == True:
+		temp_int_val = np.NAN, np.NAN
+	else:
+		temp_int_val = int_calc(0, stop, plot_count)
+	int_list.append(temp_int_val[0])
+	plot_count += 1
+field["int_sen"] = int_list
 int_sen_elapsed = time.time() - int_sen_time
 print "Integral from start to senescence %d" %int_sen_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the integral between the start and gs31
+
+int_gs31_time = time.time()
+int_gs31_list = []
+plot_count = 1
+for stop in field["gs31"]:
+	if np.isnan(stop) == True:
+		temp_int_val = np.NAN, np.NAN
+	else:
+		temp_int_val = int_calc(0, stop, plot_count)
+	int_gs31_list.append(temp_int_val[0])
+	plot_count += 1
+field["int_gs31"] = int_gs31_list
+int_gs31_elapsed = time.time() - int_gs31_time
+print "integral to gs31 %d" %int_gs31_elapsed
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the integral between gs31 and anth
+
+int_gs31_anth_time = time.time()
+int_gs31_anth_list = []
+plot_count = 1
+for start, stop in zip(field["gs31"], field["anth"]):
+	if np.isnan(start) == True or np.isnan(stop) == True:
+		temp_int_val = np.NAN, np.NAN
+	else:
+		temp_int_val = int_calc(start, stop, plot_count)
+	int_gs31_anth_list.append(temp_int_val[0])
+	plot_count += 1
+field["int_gs31_anth"] = int_gs31_anth_list
+int_gs31_anth_elapsed = time.time() - int_gs31_anth_time
+print "integral between gs31 and anth %d" %int_gs31_anth_elapsed
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate the integral between anthesis and senescence
+
+int_anth_sen_time = time.time()
+int_anth_sen_list = []
+plot_count = 1
+for start, stop in zip(field["anth"], field["sen"]):
+	if np.isnan(start) == True or np.isnan(stop) == True:
+		temp_int_val = np.NAN, np.NAN
+	else:
+		temp_int_val = int_calc(start, stop, plot_count)
+	int_anth_sen_list.append(temp_int_val[0])
+	plot_count += 1
+field["int_anth_sen"] = int_anth_sen_list
+int_anth_sen_elapsed = time.time() - int_anth_sen_time
+print "integral between anthesis and senescence %d" %int_anth_sen_elapsed
+''''''''''''''''''''''''''''''''''''''''''''''''
+
 field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_test.csv")
 total_time = time.time() - start_time
 print "Total time taken %d" %total_time
