@@ -196,6 +196,9 @@ def f_prime(reference_x, n, plot):
 	# get the index n days after start_index
 	out_index = start_index + n
 	out_tt = par["tt"].ix[out_index]
+	if plot == 5:
+		print out_tt
+		print
 
 	p0_plot = p0.loc["Plot%d" %plot]
 	if np.isnan(p0_plot[0]) == True:
@@ -205,7 +208,7 @@ def f_prime(reference_x, n, plot):
 		c, b1, m1, a, b2, m2 = p0_plot
 		f = (c / (1 + exp(-b1 * (x - m1)))) * (a + (c * exp(-exp(-b2 * (x - m2)))))
 		fx = sym.diff(f, x)
-		dx_dy = fx.evalf(n=5, subs={x: reference_x})
+		dx_dy = fx.evalf(n=35, subs={x: out_tt})
 	return dx_dy
 '''
 Integral related modules
@@ -229,7 +232,8 @@ functions being created.
 '''
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Input the raw data
-df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw.csv")
+#df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw.csv")
+df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw_allele.csv")
 par = pd.read_csv("C:\\users\\john\\google drive\\modelling\\par.csv")
 anth = pd.read_csv("C:\\users\\john\\google drive\\modelling\\anth.csv")
 
@@ -261,7 +265,8 @@ marquardt_time = time.time() - marquardt_start
 p0 = p0.transpose()
 p0.columns = ["c", "b1", "m1", "a", "b2", "m2"]
 print "Marquardt time %d" %marquardt_time
-p0.to_csv("C:\\users\\john\\canopy_model\\p0.csv")
+#p0.to_csv("C:\\users\\john\\canopy_model\\p0.csv")
+p0.to_csv("C:\\users\\john\\canopy_model\\p0_allele.csv")
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculating the residuals
@@ -287,8 +292,8 @@ for plot in xrange(0, (len(df))):
 rfr_df = rfr_df.transpose()
 rfr_time = time.time() - rfr_start
 print "rfr time %d" %rfr_time
-rfr_df.to_csv("C:\\users\\john\\canopy_model\\rfr.csv")
-
+#rfr_df.to_csv("C:\\users\\john\\canopy_model\\rfr.csv")
+rfr_df.to_csv("C:\\users\\john\\canopy_model\\rfr_allele.csv")
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the maximum rfr, and tt to max rfr
 max_rfr_finder_time_start = time.time()
@@ -508,13 +513,14 @@ field["dy_15_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 15, x) for x in
 field["dy_5_pre_anth"] = [f_prime(field["anth"].iloc[(x - 1)], -5, x) for x in xrange(1, (len(field) + 1))]
 field["dy_10_pre_anth"] = [f_prime(field["anth"].iloc[(x - 1)], -10, x) for x in xrange(1, (len(field) + 1))]
 field["dy_15_pre_anth"] = [f_prime(field["anth"].iloc[(x - 1)], -15, x) for x in xrange(1, (len(field) + 1))]
-field["dy_5_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 5, x) for x in xrange(1, (len(field) + 1))]
+
 
 dy_time_elapsed = time.time() - dy_time
 print "Derivative time %d" %dy_time_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 
-field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model.csv")
+#field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model.csv")
+field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_allele.csv")
 
 total_time = time.time() - start_time
 print "Modelling finished"
