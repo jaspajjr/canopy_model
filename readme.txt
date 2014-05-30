@@ -41,3 +41,5 @@ Sum total of canopy duration / PAR interception
 - integral between a & b
 - time that canopy was above an objective threshold
 - time that canopy was above a relative threshold
+
+The model is now finished, integration above threshold, maximum rate of change were not deemed to be biologically relavent so were abandoned as objectives.
