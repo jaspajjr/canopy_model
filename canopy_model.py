@@ -169,6 +169,36 @@ def par_calc(start, stop, par, plot, p0):
 	t_par = sum(par_int)
 	return t_par, circ_days
 
+def par_calc_daily(start, stop, par, plot, p0):
+	'''calculate the daily par intercepted between a and b'''
+	# Need to get tt value from every day between start and stop
+	# Calculate the index of start
+	if np.isnan(start) == True or np.isnan(stop) == True:
+		return np.NAN, np.NAN
+	start_index = par[par.tt > start].index[0]
+	# Calculate the index of stop
+	stop_index = par[par.tt > stop].index[0]
+	# Calculate duration in circadian days
+	circ_days = stop_index - start_index
+	# Need to get p0 and tt 
+	p0_plot = p0.loc["Plot%d" %plot]
+	# Need to get rfr value for each tt between start and stop
+	x = [par["tt"].loc[count] for count in range(start_index, stop_index)]
+	# Need to get KIPP value from every day between start and stop
+	kipp = [par["kipp"].loc[count] for count in range(start_index, stop_index)]
+	# Calculate f(x) for each x in the x list
+	rfr = [f(item, p0_plot) for item in x]
+	# Calculate PAR value from the kipp values
+	par = [(0.5 * item) for item in kipp]
+	# Convert list to Series
+	rfr = pd.Series(rfr)
+	# Multiply each rfr value by corresponding KIPP / 2
+	par = pd.Series(par)
+	par_int = rfr * par
+	# Sum the results of that for each tt 
+	t_par = sum(par_int)
+	return t_par, circ_days, par_int
+
 def rfr_n(start, n, plot):
 	''' Calculate the change in rfr value n days after 
 	reference '''
@@ -339,7 +369,6 @@ print "Senescence time %d" % senescence_time
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate time from anthesis to senescence
-
 field["anth_sen"] = field["sen"] - field["anth"]
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
@@ -348,6 +377,36 @@ field["anth_sen"] = field["sen"] - field["anth"]
 # library, however, at the time of writing I didn't plan for that 
 # so it is quicker and more efficient to use the code as intended 
 # than to rewrite it and make it more pythonic
+''''''''''''''''''''''''''''''''''''''''''''''''
+'''# Calculate the daily PAR for each plot
+daily_par_time = time.time()
+daily_par = pd.DataFrame(index=p0.index)
+daily_par_list = []
+plot_count = 1
+print "Length of field %d" %len(field["sen"])
+for item in field["sen"]:
+	p0_plot = p0.loc["Plot%d" %plot_count]
+	if np.isnan(item) == True:
+		daily_par_list = [np.NAN for x in range(0, len(par["tt"]))]
+	else:
+		for i in range(0, len(par["tt"])):
+			temp = f(par["tt"][i], p0_plot) * (0.5 * par["kipp"][i])
+			daily_par_list.append(temp)
+	daily_par["Plot%d" %plot_count] = daily_par_list
+daily_par.to_csv("C:\\users\\john\\canopy_model\\daily_par_allele.csv")
+'''
+daily_par = pd.DataFrame(index=par.index)
+plot_count = 1
+for item in field["sen"]:
+	if np.isnan(item) == True:
+		temp_par_val = np.NAN, np.NAN, np.NAN
+	else:
+		temp_par_val = par_calc_daily(0, item, par, plot_count, p0)
+		print temp_par_val[2]
+		daily_par["Plot%d" %plot_count] = temp_par_val[2]
+	plot_count += 1
+daily_par.to_csv("C:\\users\\john\\canopy_model\\daily_par_allele.csv")
+
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate PAR between sowing and senescence
 t_par_start = time.time()
