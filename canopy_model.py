@@ -378,23 +378,6 @@ field["anth_sen"] = field["sen"] - field["anth"]
 # so it is quicker and more efficient to use the code as intended 
 # than to rewrite it and make it more pythonic
 ''''''''''''''''''''''''''''''''''''''''''''''''
-'''# Calculate the daily PAR for each plot
-daily_par_time = time.time()
-daily_par = pd.DataFrame(index=p0.index)
-daily_par_list = []
-plot_count = 1
-print "Length of field %d" %len(field["sen"])
-for item in field["sen"]:
-	p0_plot = p0.loc["Plot%d" %plot_count]
-	if np.isnan(item) == True:
-		daily_par_list = [np.NAN for x in range(0, len(par["tt"]))]
-	else:
-		for i in range(0, len(par["tt"])):
-			temp = f(par["tt"][i], p0_plot) * (0.5 * par["kipp"][i])
-			daily_par_list.append(temp)
-	daily_par["Plot%d" %plot_count] = daily_par_list
-daily_par.to_csv("C:\\users\\john\\canopy_model\\daily_par_allele.csv")
-'''
 daily_par = pd.DataFrame(index=par.index)
 plot_count = 1
 for item in field["sen"]:
@@ -405,6 +388,7 @@ for item in field["sen"]:
 		print temp_par_val[2]
 		daily_par["Plot%d" %plot_count] = temp_par_val[2]
 	plot_count += 1
+daily_par = daily_par.transpose()
 daily_par.to_csv("C:\\users\\john\\canopy_model\\daily_par_allele.csv")
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
