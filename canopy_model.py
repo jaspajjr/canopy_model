@@ -385,7 +385,6 @@ for item in field["sen"]:
 		temp_par_val = np.NAN, np.NAN, np.NAN
 	else:
 		temp_par_val = par_calc_daily(0, item, par, plot_count, p0)
-		print temp_par_val[2]
 		daily_par["Plot%d" %plot_count] = temp_par_val[2]
 	plot_count += 1
 daily_par = daily_par.transpose()
