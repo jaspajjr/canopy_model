@@ -466,10 +466,14 @@ print "Anth - Sen PAR time %d seconds" %par_anth_sen_elapsed
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 rfr_n_time = time.time()
-# Calculate the rfr values 5, 10, 15 days after anthesis
-field["rfr_5_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 5, x) for x in xrange(1, (len(field) + 1))]
+# Calculate the rfr values 10, 20, 30, 40, 50, 60, 70 days after anthesis
 field["rfr_10_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 10, x) for x in xrange(1, (len(field) + 1))]
-field["rfr_15_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 15, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_20_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 20, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_30_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 30, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_40_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 40, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_50_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 50, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_60_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 60, x) for x in xrange(1, (len(field) + 1))]
+field["rfr_70_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 70, x) for x in xrange(1, (len(field) + 1))]
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the rfr value 5, 10, 15 days before anthesis
 field["rfr_5_before_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], -5, x) for x in xrange(1, (len(field) + 1))]
