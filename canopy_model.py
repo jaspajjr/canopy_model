@@ -265,7 +265,7 @@ functions being created.
 #df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw.csv")
 df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw_allele.csv")
 par = pd.read_csv("C:\\users\\john\\google drive\\modelling\\par.csv")
-anth = pd.read_csv("C:\\users\\john\\google drive\\modelling\\anth.csv")
+anth = pd.read_csv("C:\\users\\john\\google drive\\modelling\\anth_allele.csv")
 
 tt = df.loc[0]
 df = df.loc[1:]
