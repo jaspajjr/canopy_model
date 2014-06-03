@@ -226,10 +226,6 @@ def f_prime(reference_x, n, plot):
 	# get the index n days after start_index
 	out_index = start_index + n
 	out_tt = par["tt"].ix[out_index]
-	if plot == 5:
-		print out_tt
-		print
-
 	p0_plot = p0.loc["Plot%d" %plot]
 	if np.isnan(p0_plot[0]) == True:
 		return np.NAN
@@ -263,9 +259,9 @@ functions being created.
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Input the raw data
 #df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw.csv")
-df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw_allele.csv")
+df = pd.read_csv("C:\\users\\john\\google drive\\modelling\\raw.csv")
 par = pd.read_csv("C:\\users\\john\\google drive\\modelling\\par.csv")
-anth = pd.read_csv("C:\\users\\john\\google drive\\modelling\\anth_allele.csv")
+anth = pd.read_csv("C:\\users\\john\\google drive\\modelling\\anth.csv")
 
 tt = df.loc[0]
 df = df.loc[1:]
@@ -296,7 +292,7 @@ p0 = p0.transpose()
 p0.columns = ["c", "b1", "m1", "a", "b2", "m2"]
 print "Marquardt time %d" %marquardt_time
 #p0.to_csv("C:\\users\\john\\canopy_model\\p0.csv")
-p0.to_csv("C:\\users\\john\\canopy_model\\p0_allele.csv")
+p0.to_csv("C:\\users\\john\\canopy_model\\p0.csv")
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculating the residuals
@@ -323,7 +319,7 @@ rfr_df = rfr_df.transpose()
 rfr_time = time.time() - rfr_start
 print "rfr time %d" %rfr_time
 #rfr_df.to_csv("C:\\users\\john\\canopy_model\\rfr.csv")
-rfr_df.to_csv("C:\\users\\john\\canopy_model\\rfr_allele.csv")
+rfr_df.to_csv("C:\\users\\john\\canopy_model\\rfr.csv")
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the maximum rfr, and tt to max rfr
 max_rfr_finder_time_start = time.time()
@@ -388,7 +384,7 @@ for item in field["sen"]:
 		daily_par["Plot%d" %plot_count] = temp_par_val[2]
 	plot_count += 1
 daily_par = daily_par.transpose()
-daily_par.to_csv("C:\\users\\john\\canopy_model\\daily_par_allele.csv")
+daily_par.to_csv("C:\\users\\john\\canopy_model\\daily_par.csv")
 
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate PAR between sowing and senescence
@@ -473,7 +469,9 @@ field["rfr_30_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 30, x) for x in xrang
 field["rfr_40_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 40, x) for x in xrange(1, (len(field) + 1))]
 field["rfr_50_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 50, x) for x in xrange(1, (len(field) + 1))]
 field["rfr_60_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 60, x) for x in xrange(1, (len(field) + 1))]
-field["rfr_70_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 70, x) for x in xrange(1, (len(field) + 1))]
+''''''''''''''''''''''''''''''''''''''''''''''''
+# Calculate rfr value at anthesis
+field["at_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], 0, x) for x in xrange(1, (len(field) + 1))]
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the rfr value 5, 10, 15 days before anthesis
 field["rfr_5_before_anth"] = [rfr_n(field["anth"].iloc[(x - 1)], -5, x) for x in xrange(1, (len(field) + 1))]
@@ -565,8 +563,7 @@ dy_time_elapsed = time.time() - dy_time
 print "Derivative time %d" %dy_time_elapsed
 ''''''''''''''''''''''''''''''''''''''''''''''''
 
-#field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model.csv")
-field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model_allele.csv")
+field.to_csv("C:\\users\\john\\google drive\\modelling\\canopy_model.csv")
 
 total_time = time.time() - start_time
 print "Modelling finished"
