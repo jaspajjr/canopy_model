@@ -552,6 +552,8 @@ field["dy_at_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 0, x) for x in xrang
 field["dy_5_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 5, x) for x in xrange(1, (len(field) + 1))]
 field["dy_10_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 10, x) for x in xrange(1, (len(field) + 1))]
 field["dy_15_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 15, x) for x in xrange(1, (len(field) + 1))]
+field["dy_20_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 20, x) for x in xrange(1, (len(field) + 1))]
+field["dy_30_post_anth"] = [f_prime(field["anth"].iloc[(x - 1)], 30, x) for x in xrange(1, (len(field) + 1))]
 ''''''''''''''''''''''''''''''''''''''''''''''''
 # Calculate the derivative 5, 10, 15 days before anthesis
 field["dy_5_pre_anth"] = [f_prime(field["anth"].iloc[(x - 1)], -5, x) for x in xrange(1, (len(field) + 1))]
