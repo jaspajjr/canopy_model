@@ -84,9 +84,13 @@ def senescence(max_rfr, sen_rfr, rfr_list):
 		sen = np.NAN
 		return sen
 	else:
-		sen = temp_sen_list[-1]
-		if sen < 1000:
+		sen = [i for i in temp_sen_list if i > 1000]
+		#if sen < 1000:
+		if len(sen) == 0:
 			sen = np.NAN 
+		else:
+			sen = sen[-1]
+	
 	return sen
 
 def tt_to_par_tt_conversion(par, value):
